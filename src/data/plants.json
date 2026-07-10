@@ -1,0 +1,5 @@
+[
+  { "id": "demo-1", "name": "애월솔라 1호", "region": "제주시 애월읍", "source": "태양광", "capacityKw": 99.36 },
+  { "id": "demo-2", "name": "성산햇빛발전소", "region": "서귀포시 성산읍", "source": "태양광", "capacityKw": 498.96 },
+  { "id": "demo-3", "name": "한림해오름", "region": "제주시 한림읍", "source": "태양광", "capacityKw": 249.48 }
+]
