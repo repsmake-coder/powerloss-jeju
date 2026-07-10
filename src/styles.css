@@ -102,3 +102,14 @@ td.num,th.num{text-align:right}
   .card{border:none;padding:0}
 }
 @media (prefers-reduced-motion:reduce){.day{transition:none}}
+
+/* plant search */
+.plant-pick{margin-left:auto;position:relative}
+.btn.ghost{background:#fff;color:var(--primary-ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--bg)}
+.search-box{position:relative;min-width:280px}
+.search-box input{width:100%;font:inherit;font-size:13.5px;padding:9px 12px;border:1.5px solid var(--primary);border-radius:10px}
+.search-list{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(23,36,44,.12);list-style:none;padding:6px;z-index:20;max-height:320px;overflow:auto}
+.search-list button{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;font:inherit;font-size:13.5px;background:none;border:none;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.search-list button:hover{background:var(--bg)}
+.search-empty{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12.5px;color:var(--sub);z-index:20}

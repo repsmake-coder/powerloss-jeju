@@ -28,7 +28,7 @@ export default function Today({ plant }) {
       <section className="card section">
         <h2>오늘의 출력제어 경보</h2>
         <p className="sub">
-          당일 아침 실측 제주 전력수요를 반영해 경보 확정도를 보정합니다 · 제어의 88%가 오전
+          오전까지 확보된 실측 제주 전력수요를 반영해 당일 위험도를 갱신합니다 · 제어의 88%가 오전
           9~11시대에 시작
         </p>
 
@@ -42,7 +42,7 @@ export default function Today({ plant }) {
             →
           </div>
           <div>
-            <div className="sub">당일 보정 (실측 수요 반영)</div>
+            <div className="sub">당일 갱신 (실측 수요 반영)</div>
             <div className={`hero-score c-${after.grade.key}`}>{after.score}</div>
             <span className={`badge ${after.grade.key}`}>{after.grade.label}</span>
           </div>
@@ -71,7 +71,7 @@ export default function Today({ plant }) {
           </label>
         </div>
         <p className="note">
-          데모 모드: 수요값을 조정해 보정 효과를 확인할 수 있습니다(제어일 낮 최저수요 평균
+          데모 모드: 수요값을 조정해 갱신 효과를 확인할 수 있습니다(제어일 낮 최저수요 평균
           547MW, 비제어일 645MW). 운영 시 당일 실측 수요가 자동 연동됩니다.
         </p>
 
