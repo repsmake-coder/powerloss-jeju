@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { forecastScore, lossUpper } from "../engine/riskScore.js";
 import { weeklyBriefing } from "../engine/briefing.js";
 
@@ -23,7 +23,7 @@ function buildDays(scenario) {
     const d = new Date(base);
     d.setDate(base.getDate() + 1 + i);
     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const r = forecastScore({ ...scenario[i], isWeekend });
+    const r = forecastScore({ sky: scenario[i].sky, rainProbPct: scenario[i].rainProbPct, windMs: scenario[i].windMs ?? null, isWeekend });
     out.push({
       ...r,
       idx: i,
@@ -38,6 +38,30 @@ function buildDays(scenario) {
 export default function Weekly({ plant }) {
   const [scenario, setScenario] = useState(DEFAULT_SCENARIO);
   const [sel, setSel] = useState(0);
+  const [live, setLive] = useState(null); // null=시도중, false=폴백, {n, at}=연동
+
+  useEffect(() => {
+    let on = true;
+    fetch("/api/forecast")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((j) => {
+        if (!on || !Array.isArray(j.days) || j.days.length === 0) return setLive(false);
+        const today = new Date().toISOString().slice(0, 10);
+        const future = j.days.filter((d) => d.date > today).slice(0, 7);
+        if (future.length === 0) return setLive(false);
+        setScenario((s) =>
+          s.map((row, i) =>
+            future[i]
+              ? { sky: future[i].sky, rainProbPct: future[i].rainProbPct,
+                  ...(future[i].windMs != null ? { windMs: future[i].windMs } : {}) }
+              : row
+          )
+        );
+        setLive({ n: Math.min(future.length, 7) });
+      })
+      .catch(() => on && setLive(false));
+    return () => { on = false; };
+  }, []);
   const days = useMemo(() => buildDays(scenario), [scenario]);
   const worst = [...days].sort((a, b) => b.score - a.score)[0];
   const selDay = days[sel];
@@ -96,8 +120,11 @@ export default function Weekly({ plant }) {
           </label>
         </div>
         <p className="note">
-          데모 모드: 예보값을 직접 조정해 위험도 변화를 확인할 수 있습니다. 운영 시 기상청
-          단기예보 API가 자동 연동됩니다.
+          {live && live.n
+            ? `기상청 단기예보 자동 연동 중 (D+1~${Math.min(live.n, 3)} 예보 반영) · 예보값을 직접 조정해 시나리오를 비교할 수 있습니다.`
+            : live === false
+            ? "기상청 단기예보 연동 대기 — 시나리오 입력으로 동작 중입니다. 예보값을 직접 조정해 위험도 변화를 확인하세요."
+            : "기상청 단기예보를 불러오는 중…"}
         </p>
       </section>
 

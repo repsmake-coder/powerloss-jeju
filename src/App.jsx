@@ -37,7 +37,6 @@ export default function App() {
             <small>공공데이터 기반 제주 출력제어 위험 예측·영향 분석 AI 리포트</small>
           </div>
           <div className="spacer" />
-          <span className="chip">데모 모드 · 2024 봄 시즌 공식 실적 학습</span>
         </div>
       </header>
 

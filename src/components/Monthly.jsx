@@ -3,10 +3,22 @@ import events from "../data/events.json";
 import { lossUpper, LOSS_BASIS } from "../engine/riskScore.js";
 import { monthlyBriefing } from "../engine/briefing.js";
 
-const MONTHS = [...new Set(events.map((e) => e.date.slice(0, 7)))].sort();
+function allMonths() {
+  const out = [];
+  const d = new Date(2024, 2, 1); // 2024-03
+  const now = new Date();
+  while (d <= now) {
+    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    d.setMonth(d.getMonth() + 1);
+  }
+  return out.reverse(); // 최신이 위
+}
+const MONTHS = allMonths();
+const EVENT_MONTHS = new Set(events.map((e) => e.date.slice(0, 7)));
+const LATEST_EVENT_MONTH = [...EVENT_MONTHS].sort().pop();
 
 export default function Monthly({ plant }) {
-  const [month, setMonth] = useState("2024-05");
+  const [month, setMonth] = useState(LATEST_EVENT_MONTH);
   const rows = useMemo(
     () =>
       events
@@ -100,8 +112,14 @@ export default function Monthly({ plant }) {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan="6" className="sub">
-                  해당 월에는 공식 출력제어 실적이 없습니다.
+                <td colSpan="6" className="sub" style={{ padding: "16px 10px", lineHeight: 1.7 }}>
+                  {month >= "2025-01"
+                    ? <>해당 월 제주 강제 출력제어 시행 실적이 없습니다. 2025년 재생에너지 입찰시장
+                      전환 이후 제주의 강제 출력제어는 시장 기반 감발로 대체되었으며, 감발 내역은
+                      공식 통계로 공개되지 않습니다(같은 기간 육지 계통에서는 강제 출력제어가 계속
+                      시행 중). 본 서비스는 이 공백을 통합 추적하는 것을 목표로 하며, 최신 공식
+                      실적은 <b>{LATEST_EVENT_MONTH}</b>까지 확인할 수 있습니다.</>
+                    : "해당 월에는 공식 출력제어 실적이 없습니다."}
                 </td>
               </tr>
             )}
