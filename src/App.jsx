@@ -4,7 +4,7 @@ import Weekly from "./components/Weekly.jsx";
 import Today from "./components/Today.jsx";
 import Monthly from "./components/Monthly.jsx";
 
-const TABS = ["주간 위험 전망", "당일 경보", "월간 영향 리포트"];
+const TABS = ["주간 저가위험 전망", "최근 가격·계통 상황", "월간 수익영향 리포트"];
 const DEFAULT_ID = plants.find((p) => p.capacityKw >= 90 && p.capacityKw <= 110)?.id ?? plants[0].id;
 
 export default function App() {
@@ -34,7 +34,7 @@ export default function App() {
         <div className="hdr-in">
           <div className="brand">
             파워로스랩 제주
-            <small>공공데이터 기반 제주 출력제어 위험 예측·영향 분석 AI 리포트</small>
+            <small>공공데이터 기반 제주 재생에너지 저가가격·수익위험 예측 AI</small>
           </div>
           <div className="spacer" />
         </div>

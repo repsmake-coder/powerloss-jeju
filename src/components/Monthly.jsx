@@ -1,143 +1,73 @@
 import React, { useMemo, useState } from "react";
-import events from "../data/events.json";
-import { lossUpper, LOSS_BASIS } from "../engine/riskScore.js";
+import data from "../data/smp_monthly.json";
+import { exposureWon, BASE_PRICE } from "../engine/riskScore.js";
 import { monthlyBriefing } from "../engine/briefing.js";
 
-function allMonths() {
-  const out = [];
-  const d = new Date(2024, 2, 1); // 2024-03
-  const now = new Date();
-  while (d <= now) {
-    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    d.setMonth(d.getMonth() + 1);
-  }
-  return out.reverse(); // 최신이 위
-}
-const MONTHS = allMonths();
-const EVENT_MONTHS = new Set(events.map((e) => e.date.slice(0, 7)));
-const LATEST_EVENT_MONTH = [...EVENT_MONTHS].sort().pop();
+const MONTHS = data.months.map((m) => m.month).sort().reverse();
 
 export default function Monthly({ plant }) {
-  const [month, setMonth] = useState(LATEST_EVENT_MONTH);
-  const rows = useMemo(
-    () =>
-      events
-        .filter((e) => e.date.startsWith(month))
-        .map((e) => ({
-          ...e,
-          upper: lossUpper(plant.capacityKw, e.hours ?? LOSS_BASIS.hours),
-        })),
-    [month, plant]
-  );
-
-  const count = rows.length;
-  const hoursArr = rows.map((r) => r.hours).filter((h) => h != null);
-  const avgHours = hoursArr.length
-    ? (hoursArr.reduce((a, b) => a + b, 0) / hoursArr.length).toFixed(1)
-    : "-";
-  const maxHours = hoursArr.length ? Math.max(...hoursArr).toFixed(1) : "-";
-  const totalUpper = rows.reduce((a, r) => a + r.upper, 0);
+  const [month, setMonth] = useState(MONTHS[0]);
+  const mo = useMemo(() => data.months.find((m) => m.month === month), [month]);
+  const won = exposureWon(plant.capacityKw, mo.expPerKw);
   const monthLabel = `${month.slice(0, 4)}년 ${+month.slice(5)}월`;
 
   return (
-    <>
-      <section className="card section">
-        <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-          <h2>{monthLabel} 출력제어 영향 리포트</h2>
-          <span className="chip">공식 실적 기준 · 전력거래소 출력제어 공지</span>
-          <div style={{ flex: 1 }} />
-          <label className="no-print" style={{ fontSize: 13, color: "var(--sub)" }}>
-            기준 월{" "}
-            <select value={month} onChange={(e) => setMonth(e.target.value)} style={{ font: "inherit", padding: "6px 9px", borderRadius: 8, border: "1px solid var(--line)" }}>
-              {MONTHS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="btn no-print" onClick={() => window.print()}>
-            PDF 리포트 생성
-          </button>
-        </div>
-        <p className="sub" style={{ marginTop: 4 }}>
-          {plant.name} · <span className="num">{plant.capacityKw}</span>kW · SMP{" "}
-          <span className="num">{LOSS_BASIS.smp}</span>원/kWh 기준
-        </p>
+    <section className="card section">
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+        <h2>{monthLabel} 수익영향 리포트</h2>
+        <span className="chip">전력거래소 제주 SMP 실측 기준</span>
+        <div style={{ flex: 1 }} />
+        <label className="no-print" style={{ fontSize: 13, color: "var(--sub)" }}>
+          기준 월{" "}
+          <select value={month} onChange={(e) => setMonth(e.target.value)}
+            style={{ font: "inherit", padding: "6px 9px", borderRadius: 8, border: "1px solid var(--line)" }}>
+            {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </label>
+        <button className="btn no-print" onClick={() => window.print()}>PDF 리포트 생성</button>
+      </div>
+      <p className="sub" style={{ marginTop: 4 }}>
+        {plant.name} · <span className="num">{plant.capacityKw}</span>kW ·
+        시장 기준가 <span className="num">{BASE_PRICE}</span>원/kWh(2024.1~2026.6 낮 평균)
+      </p>
 
-        <div className="kpis">
-          <div className="kpi">
-            <div className="v">{count}일</div>
-            <div className="k">출력제어 발생일</div>
-          </div>
-          <div className="kpi">
-            <div className="v">{avgHours}h</div>
-            <div className="k">평균 지속시간</div>
-          </div>
-          <div className="kpi">
-            <div className="v">{maxHours}h</div>
-            <div className="k">최대 지속시간</div>
-          </div>
-          <div className="kpi">
-            <div className="v">{totalUpper.toLocaleString()}원</div>
-            <div className="k">제어 대상 포함 시 손실 상한</div>
-          </div>
-        </div>
+      <div className="kpis">
+        <div className="kpi"><div className="v">{mo.lowDays}일</div><div className="k">저가일(20원 미만 2h+)</div></div>
+        <div className="kpi"><div className="v">{mo.lowHours}h</div><div className="k">20원 미만 시간</div></div>
+        <div className="kpi"><div className="v">{mo.zeroHours}h</div><div className="k">0원 이하 시간</div></div>
+        <div className="kpi"><div className="v num">{mo.minSMP}</div><div className="k">월 최저 SMP (원/kWh)</div></div>
+        <div className="kpi"><div className="v">{won.toLocaleString()}원</div><div className="k">수익노출 추정치</div></div>
+      </div>
 
+      {mo.days.length > 0 ? (
         <table>
-          <thead>
-            <tr>
-              <th>일자</th>
-              <th>시행 시간</th>
-              <th className="num">지속</th>
-              <th className="num">낮 최저수요</th>
-              <th className="num">태양광 제어 규모</th>
-              <th className="num">내 발전소 영향 상한</th>
-            </tr>
-          </thead>
+          <thead><tr><th>일자</th><th className="num">20원 미만</th><th className="num">0원 이하</th><th className="num">일 최저 SMP</th><th className="num">내 발전소 노출액</th></tr></thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.date}>
-                <td className="num">{r.date}</td>
-                <td className="num">
-                  {r.start && r.end ? `${r.start}~${r.end}` : "공지 참조"}
-                </td>
-                <td className="num">{r.hours != null ? `${r.hours}h` : "-"}</td>
-                <td className="num">{r.minDemand != null ? `${r.minDemand}MW` : "-"}</td>
-                <td className="num">{r.solarMW != null ? `${r.solarMW}MW` : "-"}</td>
-                <td className="num">
-                  <b>{r.upper.toLocaleString()}원</b>
-                </td>
+            {mo.days.map((d) => (
+              <tr key={d.date}>
+                <td className="num">{d.date}</td>
+                <td className="num">{d.lowH}h</td>
+                <td className="num">{d.zeroH}h</td>
+                <td className="num" style={d.minSMP <= 0 ? { color: "var(--g-vhigh)", fontWeight: 700 } : {}}>{d.minSMP}</td>
+                <td className="num"><b>{exposureWon(plant.capacityKw, d.expPerKw).toLocaleString()}원</b></td>
               </tr>
             ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan="6" className="sub" style={{ padding: "16px 10px", lineHeight: 1.7 }}>
-                  {month >= "2025-01"
-                    ? <>해당 월 제주 강제 출력제어 시행 실적이 없습니다. 2025년 재생에너지 입찰시장
-                      전환 이후 제주의 강제 출력제어는 시장 기반 감발로 대체되었으며, 감발 내역은
-                      공식 통계로 공개되지 않습니다(같은 기간 육지 계통에서는 강제 출력제어가 계속
-                      시행 중). 본 서비스는 이 공백을 통합 추적하는 것을 목표로 하며, 최신 공식
-                      실적은 <b>{LATEST_EVENT_MONTH}</b>까지 확인할 수 있습니다.</>
-                    : "해당 월에는 공식 출력제어 실적이 없습니다."}
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
-
-        <p className="note">
-          ※ 영향액은 '제어 대상 포함 시 상한 추정'이며 확정 손실이 아닙니다. 이용률 60% 가정,
-          발전량 로그·정산자료 연동 시 리포트가 정밀화됩니다.
+      ) : (
+        <p className="sub" style={{ padding: "14px 4px" }}>
+          해당 월에는 저가일(20원 미만 2시간 이상)이 관측되지 않았습니다.
+          {mo.lowHours > 0 && ` 단, 20원 미만 ${mo.lowHours}시간이 산발적으로 발생해 소액 노출이 집계되었습니다.`}
         </p>
+      )}
 
-        {count > 0 && (
-          <div className="brief">
-            <span className="tag">AI 브리핑</span>
-            {monthlyBriefing({ month: monthLabel, count, avgHours, maxHours, totalUpper, plant })}
-          </div>
-        )}
-      </section>
-    </>
+      <p className="note">
+        ※ 수익노출 추정치 = 저가시간(SMP&lt;20원)에 한해 시간대 이용률 × (기준가 − SMP) × 설비용량.
+        기상 기반 예상 발전량 기준의 추정이며, 고정가격계약·SMP+REC·입찰시장 참여 등 계약·정산 유형에 따라
+        실제 정산 영향과 다를 수 있습니다. 발전량 로그·정산자료 연동 시 리포트가 정밀화됩니다.
+      </p>
+
+      <div className="brief"><span className="tag">AI 브리핑</span>{monthlyBriefing({ monthLabel, mo, won, plant })}</div>
+    </section>
   );
 }
