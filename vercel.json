@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/events", "destination": "http://141.147.30.10/events.json" },
+    { "source": "/api/smp", "destination": "http://141.147.30.10/smp_recent.json" }
+  ]
+}

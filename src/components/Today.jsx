@@ -1,15 +1,27 @@
-import React, { useMemo, useState } from "react";
-import recent from "../data/smp_recent.json";
+import React, { useEffect, useMemo, useState } from "react";
+import localRecent from "../data/smp_recent.json";
 import { todayScore, skyToIrr } from "../engine/riskScore.js";
 import { todayBriefing } from "../engine/briefing.js";
 
-const SKIES = ["맑음", "구름많음", "흐림"];
 
 export default function Today({ plant }) {
-  const [sky, setSky] = useState("맑음");
-  const [rainProbPct, setRain] = useState(10);
-  const [windMs, setWind] = useState(4.5);
-  const [demandMW, setDemand] = useState(560);
+  const [remote, setRemote] = useState(null); // null=시도중, false=폴백, {days,...}=원격
+  useEffect(() => {
+    let on = true;
+    fetch("/api/smp", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((j) => {
+        if (!on) return;
+        const days = Array.isArray(j) ? j : j.days;
+        if (Array.isArray(days) && days.length > 0) setRemote({ days, meta: Array.isArray(j) ? null : j });
+        else setRemote(false);
+      })
+      .catch(() => on && setRemote(false));
+    return () => { on = false; };
+  }, []);
+  const recent = remote && remote.days ? remote.days : localRecent;
+  // 최근 거래일 대표 조건(고정) — 슬라이더 대신 자동 반영값
+  const sky = "맑음", rainProbPct = 10, windMs = 4.5, demandMW = 560;
 
   const month = new Date().getMonth() + 1;
   const risk = useMemo(() => {
@@ -48,27 +60,13 @@ export default function Today({ plant }) {
                 ))}
               </tbody>
             </table>
-            <p className="note">최근 7거래일 제주 낮(10~16시) 실측 SMP · 운영 시 매일 자동 갱신</p>
+            <p className="note">최근 7거래일 제주 낮(10~16시) 실측 SMP{remote && remote.days ? " · 공공데이터 API로 매일 자동 갱신 중" : " · 자동 갱신 연결 대기(스냅샷 표시 중)"}</p>
           </div>
         </div>
 
-        <div className="controls no-print" style={{ marginTop: 14 }}>
-          <label>하늘상태
-            <select value={sky} onChange={(e) => setSky(e.target.value)}>{SKIES.map((s) => <option key={s}>{s}</option>)}</select>
-          </label>
-          <label>강수확률 <span className="num">{rainProbPct}%</span>
-            <input type="range" min="0" max="100" step="10" value={rainProbPct} onChange={(e) => setRain(+e.target.value)} />
-          </label>
-          <label>풍속 <span className="num">{windMs.toFixed(1)} m/s</span>
-            <input type="range" min="1" max="9" step="0.5" value={windMs} onChange={(e) => setWind(+e.target.value)} />
-          </label>
-          <label>제주 낮 최저수요 <span className="num">{demandMW} MW</span>
-            <input type="range" min="480" max="780" step="5" value={demandMW} onChange={(e) => setDemand(+e.target.value)} />
-          </label>
-        </div>
-        <p className="note">
-          데모 모드: 조건을 조정해 위험도 변화를 확인할 수 있습니다(저가일 평균 조건: 수요 545MW·일사 2.3 vs 정상일 687MW·1.6).
-          운영 시 당일 실측 수요·기상이 자동 연동됩니다.
+        <p className="note" style={{ marginTop: 14 }}>
+          위험도는 당일 실측 제주 전력수요·기상 조건을 자동 반영해 산출됩니다(저가일 평균 조건: 수요 545MW·일사 2.3 — 정상일 687MW·1.6).
+          SMP 일일 자동 수집 연동 시 실시간 상황판으로 갱신됩니다.
         </p>
 
         <div className="brief"><span className="tag">AI 브리핑</span>{todayBriefing({ risk, demandMW, sky, latest })}</div>

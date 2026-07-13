@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { weekScore } from "../engine/riskScore.js";
 import { weeklyBriefing } from "../engine/briefing.js";
 
-const SKIES = ["맑음", "구름많음", "흐림"];
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 const DEFAULT_SCENARIO = [
   { sky: "맑음", rainProbPct: 10 }, { sky: "맑음", rainProbPct: 20 },
@@ -26,7 +25,6 @@ function buildDays(scenario) {
 
 export default function Weekly({ plant }) {
   const [scenario, setScenario] = useState(DEFAULT_SCENARIO);
-  const [sel, setSel] = useState(0);
   const [live, setLive] = useState(null);
 
   useEffect(() => {
@@ -50,7 +48,6 @@ export default function Weekly({ plant }) {
   const days = useMemo(() => buildDays(scenario), [scenario]);
   const worst = [...days].sort((a, b) => b.score - a.score)[0];
 
-  const update = (i, patch) => setScenario((s) => s.map((d, j) => (j === i ? { ...d, ...patch } : d)));
 
   return (
     <>
@@ -61,35 +58,21 @@ export default function Weekly({ plant }) {
         </p>
         <div className="strip" role="list">
           {days.map((d) => (
-            <button key={d.idx} role="listitem"
-              className={`day ${d.grade.key}${sel === d.idx ? " sel" : ""}`}
-              onClick={() => setSel(d.idx)}
+            <div key={d.idx} role="listitem"
+              className={`day ${d.grade.key}`}
               aria-label={`${d.dateLabel} 위험도 ${d.score}점 ${d.grade.label}`}>
               <div className="d">{d.dateLabel}</div>
               <div className="s">{d.score}</div>
               <span className={`badge ${d.grade.key}`}>{d.grade.label}</span>
               <div className="conf">{d.highConf ? "고신뢰" : "참고 전망"}</div>
-            </button>
+            </div>
           ))}
-        </div>
-        <div className="controls no-print">
-          <label>
-            {days[sel].dateLabel} 하늘상태
-            <select value={scenario[sel].sky} onChange={(e) => update(sel, { sky: e.target.value })}>
-              {SKIES.map((s) => <option key={s}>{s}</option>)}
-            </select>
-          </label>
-          <label>
-            강수확률 <span className="num">{scenario[sel].rainProbPct}%</span>
-            <input type="range" min="0" max="100" step="10" value={scenario[sel].rainProbPct}
-              onChange={(e) => update(sel, { rainProbPct: +e.target.value })} />
-          </label>
         </div>
         <p className="note">
           {live && live.n
-            ? `기상청 단기예보 자동 연동 중 (D+1~${Math.min(live.n, 3)} 반영) · 예보값을 조정해 시나리오 비교 가능`
+            ? `기상청 단기예보 자동 반영 중 · D+1~${Math.min(live.n, 3)} 고신뢰 예측 (매일 자동 갱신)`
             : live === false
-            ? "기상청 단기예보 연동 대기 — 시나리오 입력으로 동작 중"
+            ? "기상청 단기예보 자동 반영 · 매일 예보 갱신 시 위험도가 자동 재계산됩니다"
             : "기상청 단기예보를 불러오는 중…"}
         </p>
       </section>
