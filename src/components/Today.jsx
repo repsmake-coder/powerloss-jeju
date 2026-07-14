@@ -20,6 +20,16 @@ export default function Today({ plant }) {
     return () => { on = false; };
   }, []);
   const recent = remote && remote.days ? remote.days : localRecent;
+
+  // 최신성 검사: 원격 데이터의 최신 날짜가 3일 이내여야 "자동 갱신 중"으로 표시
+  const remoteLatestDate = remote && remote.days && remote.days.length
+    ? remote.days[remote.days.length - 1].date
+    : null;
+  const ageDays = remoteLatestDate
+    ? Math.floor((Date.now() - new Date(`${remoteLatestDate}T00:00:00+09:00`).getTime()) / 86400000)
+    : Infinity;
+  const remoteHealthy = remote && remote.days && remote.days.length > 0 && ageDays <= 3;
+  const remoteStale = remote && remote.days && remote.days.length > 0 && ageDays > 3;
   // 최근 거래일 대표 조건(고정) — 슬라이더 대신 자동 반영값
   const sky = "맑음", rainProbPct = 10, windMs = 4.5, demandMW = 560;
 
@@ -60,7 +70,10 @@ export default function Today({ plant }) {
                 ))}
               </tbody>
             </table>
-            <p className="note">최근 7거래일 제주 낮(10~16시) 실측 SMP{remote && remote.days ? " · 공공데이터 API로 매일 자동 갱신 중" : " · 자동 갱신 연결 대기(스냅샷 표시 중)"}</p>
+            <p className="note">최근 7거래일 제주 낮(10~16시) 실측 SMP
+              {remoteHealthy ? " · 공공데이터 API로 매일 자동 갱신 중"
+                : remoteStale ? ` · 최근 데이터 갱신 지연(기준일 ${remoteLatestDate})`
+                : " · 자동 갱신 연결 대기(스냅샷 표시 중)"}</p>
           </div>
         </div>
 
