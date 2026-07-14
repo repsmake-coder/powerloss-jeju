@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import data from "../data/smp_monthly.json";
 import { exposureWon, BASE_PRICE } from "../engine/riskScore.js";
 import { monthlyBriefing } from "../engine/briefing.js";
+import SmpBandDonut from "./SmpBandDonut.jsx";
 
 const MONTHS = data.months.map((m) => m.month).sort().reverse();
 
@@ -37,6 +38,10 @@ export default function Monthly({ plant }) {
         <div className="kpi"><div className="v">{mo.zeroHours}h</div><div className="k">0원 이하 시간</div></div>
         <div className="kpi"><div className="v num">{mo.minSMP}</div><div className="k">월 최저 SMP (원/kWh)</div></div>
         <div className="kpi"><div className="v">{won.toLocaleString()}원</div><div className="k">수익노출 추정치</div></div>
+      </div>
+
+      <div style={{ margin: "18px 0", paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+        <SmpBandDonut month={mo} />
       </div>
 
       {mo.days.length > 0 ? (

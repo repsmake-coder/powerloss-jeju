@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import localRecent from "../data/smp_recent.json";
 import { todayScore, skyToIrr } from "../engine/riskScore.js";
 import { todayBriefing } from "../engine/briefing.js";
+import SmpTrendChart from "./SmpTrendChart.jsx";
 
 
 export default function Today({ plant }) {
@@ -74,6 +75,9 @@ export default function Today({ plant }) {
               {remoteHealthy ? " · 공공데이터 API로 매일 자동 갱신 중"
                 : remoteStale ? ` · 최근 데이터 갱신 지연(기준일 ${remoteLatestDate})`
                 : " · 자동 갱신 연결 대기(스냅샷 표시 중)"}</p>
+            <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+              <SmpTrendChart data={recent} />
+            </div>
           </div>
         </div>
 
