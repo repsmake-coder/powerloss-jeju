@@ -41,7 +41,7 @@ export default function Today({ plant }) {
 
         <div style={{ display: "flex", gap: 28, alignItems: "center", flexWrap: "wrap", margin: "18px 0 6px" }}>
           <div>
-            <div className="sub">현재 조건 기준 저가위험도</div>
+            <div className="sub">조건 시뮬레이션 위험도</div>
             <div className={`hero-score c-${risk.grade.key}`}>{risk.score}</div>
             <span className={`badge ${risk.grade.key}`}>{risk.grade.label}</span>
           </div>
